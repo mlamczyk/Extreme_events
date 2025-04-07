@@ -288,14 +288,15 @@ u <- quantile(dane, 0.95)
 u
 
 # Wykresy rozrzutu z zaznaczonym progiem u
-
+png("rozrzut-nadwyzki.png", width=800, height=500)
 par(mfrow=c(2,1))
-plot(dane, type="h")
+plot(dane, type="h", main="(a) Wykres rozrzutu z zaznaczonym progiem u")
 abline(h=u, lwd=2, col='red')
 
 # Nadwyżki nad progiem u
 Y <- dane[dane > u] - u
-plot(Y, type='h')
+plot(Y, type='h', main="(b) Nadwyżki nad progiem u")
+dev.off()
 
 # Liczba obserwacji przekraczających próg u = kwantyl 95%
 przekroczenia_u <- sum(dane > u)
@@ -311,16 +312,24 @@ xi <- fitGPD$mle[[2]]
 beta<- fitGPD$mle[[1]]
 xi; beta # -0.535749, 4.010741
 
+tabela_gpd <- data.frame(
+  xi = xi,
+  beta = beta
+)
+tabela_gpd
+
 # Ocena dobroci dopasowania
 par(mfrow=c(2,1))
-hist(Y, prob=TRUE) # histogram nadwyżek
+hist(Y, prob=TRUE, main="Histogram nadwyżek")
 curve(evir::dgpd(x,xi,0,beta), col='red', lwd=2, add=T) # gęstość rozkładu GPD
 
 qqplot(Y, evir::qgpd(ppoints(1000),xi,0,beta), main="QQ-plot")
 abline(a=0,b=1,col=2)
 
 # Wykresy dopasowania
+png("diagnostyczne-gpd.png", width=800, height=500)
 ismev::gpd.diag(fitGPD)
+dev.off()
 
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
 
@@ -329,7 +338,7 @@ n <- length(dane)
 # Ręcznie
 x20.3 <- as.numeric(u + (beta/xi) * ((20 * (przekroczenia_u/n))^xi - 1))
 x50.3 <- as.numeric(u + (beta/xi) * ((50 * (przekroczenia_u/n))^xi - 1))
-x20.3; x50.3
+x20.3; x50.3 # 1003.121, 1006.056
 
 # Sprawdzamy przekroczenia poziomów zwrotu
 przekroczenia_x20.3 <- dane_lato %>% filter(cisnienie > x20.3)
@@ -342,9 +351,18 @@ liczba_x50.3 <- nrow(przekroczenia_x50.3)
 cat("Liczba przekroczeń x20:", liczba_x20.3, "\n") # 1671
 cat("Liczba przekroczeń x50:", liczba_x50.3, "\n") # 658
 
-# Lata i wielkości przekroczeń
-#przekroczenia_x20.3 <- przekroczenia_x20.3[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
-#przekroczenia_x50.3 <- przekroczenia_x50.3[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
+# Wykres
+png("progi.png", width=800, height=500)
+par(mfrow=c(1,1))
+plot(dane, type="h", main="Wykres rozrzutu")
+abline(h=u, lwd=2, col='red')
+abline(h=x20.3, lwd=2, col='green')
+abline(h=x50.3, lwd=2, col='blue')
+legend("bottomleft",
+       legend=c("u", "x20", "x50"),  # opisy
+       col=c("red", "green", "blue"),
+       lwd=2)
+dev.off()
 
 
 # Z wbudowanej funkcji
@@ -374,7 +392,7 @@ tabela_wynikow
 
 # Nowe dane, wyniki estymacji zapisujemy w pliku Wyniki.Rdata
 save(tabela_statystyk, tabela_wynikow, tabela_st1, tabela_gev,
-     przekroczenia_x20.2,
+     przekroczenia_x20.2, tabela_gpd,
      file="Wyniki.Rdata")
 
 # Ładowanie danych zapisanych w formacie RData

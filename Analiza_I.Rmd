@@ -1,7 +1,6 @@
 ---
 title: "Analiza maksimów ciśnienia atmosferycznego"
 author: "Magdalena Lamczyk"
-date: "`r Sys.Date()`"
 output: 
   pdf_document: default
   word_document: default
@@ -37,7 +36,7 @@ knitr::include_graphics("mapa.png")
 
 Dane pochodzą z 15-letniego okresu (2006-2020) dla stacji meteorologicznej w Chojnicach. Pomiary ciśnienia atmosferycznego (hPa) zostały zebrane w godzinnych interwałach. Do analizy wykorzystamy maksima godzinowe oraz roczne ciśnienia atmosferycznego z każdego dnia lata (czerwiec-sierpień).
 
-Sprawdzono status pomiarów ciśnienia (czy ciśnienie zostało zmierzone poprawnie). Wszystkie pomiary latem (czerwiec-sierpień) mają status "8", co sugeruje, że dane są kompletne, a pomiar ciśnienia jest wiarygodny.
+Sprawdzono status pomiarów ciśnienia (czy ciśnienie zostało zmierzone poprawnie). Wszystkie pomiary latem (czerwiec-sierpień) mają status "8", co sugeruje, że dane są kompletne, a pomiar ciśnienia jest wiarygodny. Zbiór danych obejmuje 33120 pomiarów ciśnienia.
 
 Tabela 1 zawiera podstawowe statystyki opisowe dla ciśnienia atmosferycznego w miesiącach letnich (czerwiec–sierpień) w Chojnicach w latach 2006–2020. Minimalna wartość ciśnienia wyniosła 968.9 hPa, natomiast maksymalna osiągnęła 1010.5 hPa. Mediana (994.4 hPa) i średnia (994.24 hPa) są do siebie bardzo zbliżone, co sugeruje symetryczny rozkład danych. Odchylenie standardowe rzędu 5.76 hPa wskazuje na umiarkowane zróżnicowanie ciśnień w badanym okresie.
 
@@ -139,12 +138,66 @@ knitr::kable(przekroczenia_x20.2, row.names = FALSE,
   
 # Model III: metoda przekroczeń progu (POT)
 
+Metoda POT (Peak Over Threshold) należy do rodziny metod ekstremalnych i służy do modelowania dużych wartości przekraczających ustalony próg $u$. W przeciwieństwie do metody maksimów blokowych (BMM), POT wykorzystuje więcej informacji, ponieważ uwzględnia wszystkie obserwacje przekraczające próg, a nie tylko maksima bloków.
 
+Dla zmiennej losowej $X$ o dystrybuancie $F$ i ustalonym progu $u>0$ definiujemy nadwyżkę jako $Y=X-u$.
+
+Uogólniony rozkład Pareto (GPD) to rozkład o dystrybuancie:
+$$
+G_{\xi, \beta}(x) =
+\begin{cases}
+1 - \left(1 + \dfrac{\xi \cdot x}{\beta} \right)^{-1/\xi}, & \text{dla } \xi \ne 0 \\\\
+1 - \exp\left(-\dfrac{x}{\beta} \right), & \text{dla } \xi = 0.
+\end{cases}
+$$
+
+**Twierdzenie** \
+Dystrybuanty maksimów $M_n=\max(X_1, X_2, \ldots, X_n)$ są zbieżne do dystrybuanty GEV z parametrem kształtu $\xi$ wtedy i tylko wtedy, gdy
+
+$$\lim_{u \to \infty} \sup_x |F_u(x)-G_{\xi,\beta(u)}(x)|=0,$$
+dla pewnej funkcji $\beta$ zależnej od $u$.
+
+Możemy więc, nadwyżki nad dostatecznie wysoki próg $u$, modelować rozkładem GPD.
+
+Niech ręcznie wybrany próg $u$ będzie na poziomie kwantyla 95%. Rysunek 6(a) przedstawia wykres rozrzutu z zaznaczonym progiem $u$, a Rysunek 6(b) nadwyżki nad progiem $u$. Liczba obserwacji przekraczających próg $u$ wynosi 1624.
+
+```{r echo=FALSE, fig.align='center', out.width='70%', fig.cap='(a) Wykres z progiem u i (b) nadwyżki nad u'}
+knitr::include_graphics("rozrzut-nadwyzki.png")
+```
+
+Parametry $\xi$ i $\beta$ estymujemy metodą największej wiarygodności (MLE) z dopasowanego rozkładu GPD. Wyestymowane parametry zostały zestawione w Tabeli 5:
+
+```{r echo=FALSE}
+knitr::kable(tabela_gpd, row.names = FALSE, col.names = c("$\\xi$", "$\\beta$"),
+             caption = "Wyestymowane parametry rozkładu GPD")
+```
+
+Dopasowanie rozkładu GDP do danych empirycznych możemy ocenic na podstawie wykresów na Rysunku 7. Wykres kwantylowy wskazuje na bardzo dobre dopasowanie rozkładu GEV do danych empirycznych.
+
+```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='Wykresy diagnostyczne'}
+knitr::include_graphics("diagnostyczne-gpd.png")
+```
+
+Poziomy zwrotu $x_{20}$ i $x_{50}$ wyznaczamy korzystając z poniższych wzorów
+$$x_k = u + \frac{\beta}{\xi}((k\cdotp)^\xi-1), \quad \xi \neq 0$$
+$$x_k = u + \beta \ln(k\cdot p), \quad \xi = 0.$$
+
+Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1006.056$. Wówczas średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1003.121 hPa, a raz na 50 lat przekroczy 1006.056 hPa. Liczba przekroczeń poziomów zwrotu $x_{20}$ w zbiorze danych to 1671, natomiast poziom zwrotu $x_{50}$ przekracza 658 pomiarów ze zbioru danych. Poziomy zwrotu wyliczone metodą POT oraz ręcznie wybrany próg $u$ zostały przedstawione na Rysunku 8.
+
+```{r echo=FALSE, fig.align='center', out.width='70%', fig.cap='Wykres z progiem u oraz poziomami zwrotu x20 i x50'}
+knitr::include_graphics("progi.png")
+```
 
 # Wnioski
 
-Zestawienie wyników modeli...
+W Tabeli 6 zostały zestawione poziomy zwrotu wyznaczone trzema metodami.
+
 ```{r echo=FALSE}
 knitr::kable(tabela_wynikow, caption = "Poziomy zwrotu $x_{20}$ i $x_{50}$ dla różnych modeli")
 ```
 
+Model I przewiduje najgrubsze ogony. Poziomy zwrotu z tego modelu są najwyższe, a wśród pomiarów z badanego okresu (sezon letni w latach 2006-2020) nie wystąpiły przekroczenia tych poziomów.
+
+Poziomy zwrotu w Modelu II zostały wyznaczone z maksimów rocznych letnich ciśnienia. Danych było bardzo mało (15 wartości), co może nie być wystarczające aby dobrze dopasować rozkład. Potwierdza to wykres dopasowania kwantyl-kwantyl, który wskazuje na słabe dopasowanie rozkładu teoretycznego GEV do danych empirycznych. Stąd wyniki mogą nie być wiarygodne. Poziomy zwrotu 20-letnie i 50-letnie wyznaczone tą metodą są do siebie bardzo zbliżone.
+
+Model III estymuje najniższe wartości poziomów zwrotu.
