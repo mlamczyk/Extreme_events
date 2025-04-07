@@ -85,10 +85,10 @@ tabela_statystyk
 # Histogram rozkładu pomiarów ciśnienia
 png("histogram-rozrzut.png", width=800, height=300)
 par(mfrow=c(1,2))
-hist(dane, prob=T, main="Rozkład ciśnienia", xlab="Ciśnienie [hPa]")
+hist(dane, prob=T, main="(a) Rozkład ciśnienia", xlab="Ciśnienie [hPa]")
 
 # Wykres rozrzutu maksimów roczynch ciśnienia
-plot(dane_max$Rok, dane_max$cisnienie, main="Maksima roczne ciśnienia latem (2006-2020)",
+plot(dane_max$Rok, dane_max$cisnienie, main="(b) Maksima roczne ciśnienia latem (2006-2020)",
      xlab="Rok", ylab="Maksymalne ciśnienie [hPa]", pch=19)
 dev.off()
 
@@ -115,24 +115,23 @@ fit$parameters # "mu"    "sigma" "nu"    "tau"
 mu <- fit$mu # parametr lokalizacji
 sigma <- fit$sigma # parametr skali (określa rozrzut danych)
 nu <- fit$nu # parametr stopni swobody (kontroluje grubość ogonów)
-tau <- fit$tau # parametr skośności (> 0 prawoskośny, = 0 symetryczny, < 0 leweoskośny)
+tau <- fit$tau # parametr skośności (> 0 prawoskośny, = 0 symetryczny, < 0 lewoskośny)
 
 mu; sigma; nu; tau
 
-# Porównanie ST1 i t-Studenta
-par(mfrow=c(1,1))
-x <- seq(-5, 5, length.out=100)
-y1 <- dST1(x, mu=0, sigma=1, nu=5, tau=3) # ST1
-y2 <- dt(x, df=5) # t-Student
-
-plot(x, y2, type="l", col="black", lwd=2, ylim=c(0, 0.7), ylab="gęstość", main="Porównanie rozkładu ST1 i t-Studenta")
-lines(x, y1, col="red", lwd=2)
-legend("topright", legend=c("t-Student (symetryczny)", "ST1 (prawoskośny)"),
-       col=c("black", "red"), lty=1, lwd=2)
-
+tabela_st1 <- data.frame(
+  mu = mu,
+  sigma = sigma,
+  nu = nu,
+  tau = tau
+)
+tabela_st1
 
 ### WYKRESY DIAGNOSTYCZNE ###
 
+# plotdist(dane, histo = TRUE, demp = TRUE)
+
+png("diagnostyczne-st1.png", width=800, height=500)
 par(mfrow=c(2,2))
 
 # Histogram z gęstością teoretyczną
@@ -150,6 +149,7 @@ abline(a=0, b=1, col="red")
 # Dystrybuanta empiryczna vs teoretyczna
 plot(ecdf(dane), main="Dystrybuanta empiryczna vs teoretyczna")
 curve(pST1(x, mu, sigma, nu, tau), col="red", add=TRUE)
+dev.off()
 
 
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
@@ -168,7 +168,19 @@ x50.1 <- qST1(1 - 1/k50, mu, sigma, nu, tau)
 
 x20.1; x50.1 # 1017.384; 1018.751
 
+# Sprawdzamy przekroczenia poziomów zwrotu
+przekroczenia_x20.1 <- dane_lato %>% filter(cisnienie > x20.1)
+przekroczenia_x50.1 <- dane_lato %>% filter(cisnienie > x50.1)
+
+# Liczba przekroczeń
+liczba_x20.1 <- nrow(przekroczenia_x20.1)
+liczba_x50.1 <- nrow(przekroczenia_x50.1)
+
+cat("Liczba przekroczeń x20:", liczba_x20.1, "\n") # 0
+cat("Liczba przekroczeń x50:", liczba_x50.1, "\n") # 0
+
 # Histogram z oznaczonymi poziomami zwrotu
+png("histogram-x.png", width=800, height=400)
 par(mfrow=c(1,1))
 hist(dane, prob=TRUE, main="Rozkład ciśnienia z poziomami zwrotu", xlab="Ciśnienie",
      col="lightgray", border="black", xlim=c(965,1020))
@@ -177,15 +189,10 @@ abline(v=x20.1, col="blue", lwd=2, lty=2)
 abline(v=x50.1, col="purple", lwd=2, lty=2)
 legend("topleft", legend=c("ST1 fit", "x20", "x50"),
        col=c("red", "blue", "purple"), lty=c(1,2,2), lwd=2)
+dev.off()
 
 
 ### METODA MAKSIMÓW BLOKOWYCH (BMM) ###
-
-# Histogram maksimów rocznych
-hist(m_dane, prob=TRUE, 
-     main="Rozkład maksimów rocznych (letnich) ciśnienia",
-     xlab="Ciśnienie [hPa]", 
-     border="black")
 
 # Estymacja parametrów GEV w ismev
 fit.m <- ismev::gev.fit(m_dane)
@@ -193,22 +200,31 @@ fit.m$mle
 #         mu       sigma        ksi 
 # 1007.425704    4.454460   -1.448937
 
+parametryGEV <- fit.m$mle
+
+tabela_gev <- data.frame(
+  mu = parametryGEV[1],
+  sigma = parametryGEV[2],
+  xi = parametryGEV[3]
+)
+tabela_gev
+
 # Wykresy diagnostyczne ismev
+png("diagnostyczne-gev.png", width=800, height=500)
 ismev::gev.diag(fit.m)
+dev.off()
 
 # Estymacja parametrów GEV w fExtremes
-fit.f <- fExtremes::gevFit(m_dane)
+#fit.f <- fExtremes::gevFit(m_dane)
 
 # Wykresy i podsumowanie fExtremes
-par(mfrow=c(2,2))
-summary(fit.f)
+#par(mfrow=c(2,2))
+#summary(fit.f)
 #         xi      mu        beta 
 # -1.110833 1007.347541    3.501854
 
 
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
-
-parametryGEV <- fit.m$mle
 
 # qgev(p, xi = 1, mu = 0, sigma = 1) z biblioteki evir
 x20.2 <- qgev(0.95, parametryGEV[3], parametryGEV[1], parametryGEV[2])[1]
@@ -221,23 +237,26 @@ x50.2 <- qgev(0.98, parametryGEV[3], parametryGEV[1], parametryGEV[2])[1]
 x20.2; x50.2 # 1010.458, 1010.489
 
 # Sprawdzamy przekroczenia poziomów zwrotu
-przekroczenia_x20 <- dane_lato %>% filter(cisnienie > x20.2)
-przekroczenia_x50 <- dane_lato %>% filter(cisnienie > x50.2)
+przekroczenia_x20.2 <- dane_lato %>% filter(cisnienie > x20.2)
+przekroczenia_x50.2 <- dane_lato %>% filter(cisnienie > x50.2)
 
 # Liczba przekroczeń
-liczba_x20 <- nrow(przekroczenia_x20)
-liczba_x50 <- nrow(przekroczenia_x50)
+liczba_x20.2 <- nrow(przekroczenia_x20.2)
+liczba_x50.2 <- nrow(przekroczenia_x50.2)
 
-cat("Liczba przekroczeń x20:", liczba_x20, "\n") # 4
-cat("Liczba przekroczeń x50:", liczba_x50, "\n") # 4
+cat("Liczba przekroczeń x20:", liczba_x20.2, "\n") # 4
+cat("Liczba przekroczeń x50:", liczba_x50.2, "\n") # 4
 
 # Lata i wielkości przekroczeń
-przekroczenia_x20 <- przekroczenia_x20[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
-przekroczenia_x50 <- przekroczenia_x50[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
+przekroczenia_x20.2 <- przekroczenia_x20.2[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
+przekroczenia_x50.2 <- przekroczenia_x50.2[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
 
-print(przekroczenia_x20)
-print(przekroczenia_x50)
+print(przekroczenia_x20.2)
+print(przekroczenia_x50.2)
 # Mamy 4 przekroczenia o ciśnieniu 1010.5: 2.06.2011, 3.06.2011, 2 pomiary z 7.07.2013
+print(identical(przekroczenia_x20.2,przekroczenia_x50.2))
+print(all.equal(przekroczenia_x20.2,przekroczenia_x50.2))
+# Przekroczenia dla obu poziomów zwrotu są takie same
 
 # Histogram z oznaczonymi poziomami zwrotu
 par(mfrow=c(1,1))
@@ -258,17 +277,18 @@ legend("topleft", legend=c("x20", "x50"),
        col=c("red", "blue"), lty=c(2,2), lwd=2)
 
 
-### METODA PRZEKROCZEŃ PROGU (POT)###
+### METODA PRZEKROCZEŃ PROGU (POT) ###
 
 # Dobór odpowiednio wysokiego progu
-# PPatrzymy na wykres kwantylowy i oceniamy, czy dane dopasowują się do funkcji liniowej.
+# Patrzymy na wykres kwantylowy i oceniamy, czy dane dopasowują się do funkcji liniowej.
 # Jeśli tak, to możemy spróbować zmniejszyć próg. (80% za mały próg, 95% wykres jest okej)
 
 # Wybieramy próg na poziomie kwantyla 95%
 u <- quantile(dane, 0.95)
 u
 
-# Wykresy rozrzutu z zaznaczonym progiem u 
+# Wykresy rozrzutu z zaznaczonym progiem u
+
 par(mfrow=c(2,1))
 plot(dane, type="h")
 abline(h=u, lwd=2, col='red')
@@ -311,21 +331,37 @@ x20.3 <- as.numeric(u + (beta/xi) * ((20 * (przekroczenia_u/n))^xi - 1))
 x50.3 <- as.numeric(u + (beta/xi) * ((50 * (przekroczenia_u/n))^xi - 1))
 x20.3; x50.3
 
+# Sprawdzamy przekroczenia poziomów zwrotu
+przekroczenia_x20.3 <- dane_lato %>% filter(cisnienie > x20.3)
+przekroczenia_x50.3 <- dane_lato %>% filter(cisnienie > x50.3)
+
+# Liczba przekroczeń
+liczba_x20.3 <- nrow(przekroczenia_x20.3)
+liczba_x50.3 <- nrow(przekroczenia_x50.3)
+
+cat("Liczba przekroczeń x20:", liczba_x20.3, "\n") # 1671
+cat("Liczba przekroczeń x50:", liczba_x50.3, "\n") # 658
+
+# Lata i wielkości przekroczeń
+#przekroczenia_x20.3 <- przekroczenia_x20.3[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
+#przekroczenia_x50.3 <- przekroczenia_x50.3[, c("Rok", "Miesiac", "Dzien", "Godzina", "cisnienie")]
+
+
 # Z wbudowanej funkcji
-fitGPD <- gpd(dane, u)
-xi_est <- fitGPD$par.est[[1]]
-beta_est <- fitGPD$par.est[[2]]
-xi_est; beta_est
-x_20 <- evir::riskmeasures(fitGPD,0.95)[2]
-x_50 <- evir::riskmeasures(fitGPD,0.98)[2]
-x_20; x_50
+#fitGPD <- gpd(dane, u)
+#xi_est <- fitGPD$par.est[[1]]
+#beta_est <- fitGPD$par.est[[2]]
+#xi_est; beta_est
+#x_20 <- evir::riskmeasures(fitGPD,0.95)[2]
+#x_50 <- evir::riskmeasures(fitGPD,0.98)[2]
+#x_20; x_50
 
 
 # Wyniki poziomów zwrotu z trzech modeli
 cat("Model 1, x20:", x20.1, ", x50:", x50.1)
 cat("Model 2, x20:", x20.2, ", x50:", x50.2)
 cat("Model 3, x20:", x20.3, ", x50:", x50.3)
-cat("Model 3 (evir), x20:", x_20, ", x50:", x_50) # wychodzi tak samo jak ręcznie
+#cat("Model 3 (evir), x20:", x_20, ", x50:", x_50) # wychodzi tak samo jak ręcznie
 
 tabela_wynikow <- data.frame(
   x20 = c(x20.1, x20.2, x20.3),
@@ -337,7 +373,8 @@ tabela_wynikow
 
 
 # Nowe dane, wyniki estymacji zapisujemy w pliku Wyniki.Rdata
-save(tabela_statystyk, tabela_wynikow,
+save(tabela_statystyk, tabela_wynikow, tabela_st1, tabela_gev,
+     przekroczenia_x20.2,
      file="Wyniki.Rdata")
 
 # Ładowanie danych zapisanych w formacie RData

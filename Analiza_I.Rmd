@@ -33,9 +33,9 @@ Chojnice są zlokalizowane w pobliżu granicy Pomorza i Kujaw, co wpływa na spe
 knitr::include_graphics("mapa.png")
 ```
   
-# 1. Podstawowe informacje o danych
+# Podstawowe informacje o danych
 
-Dane pochodzą z 15-letniego okresu (2006-2020) dla stacji meteorologicznej w Chojnicach. Pomiary ciśnienia atmosferycznego (hPa) zostały zebrane w godzinnych interwałach. Do analizy wykorzystamy maksima ciśnienia atmosferycznego z każdego dnia lata (czerwiec-sierpień).
+Dane pochodzą z 15-letniego okresu (2006-2020) dla stacji meteorologicznej w Chojnicach. Pomiary ciśnienia atmosferycznego (hPa) zostały zebrane w godzinnych interwałach. Do analizy wykorzystamy maksima godzinowe oraz roczne ciśnienia atmosferycznego z każdego dnia lata (czerwiec-sierpień).
 
 Sprawdzono status pomiarów ciśnienia (czy ciśnienie zostało zmierzone poprawnie). Wszystkie pomiary latem (czerwiec-sierpień) mają status "8", co sugeruje, że dane są kompletne, a pomiar ciśnienia jest wiarygodny.
 
@@ -46,20 +46,102 @@ knitr::kable(tabela_statystyk, row.names = FALSE,
              caption = "Podstawowe statystyki ciśnienia atmosferycznego latem w Chojnicach")
 ```
 
-Na Rysunku 2(a) przedstawiono histogram rozkładu pomiarów ciśnienia atmosferycznego latem. Rysunek 2(b) prezentuje wykres rozrzutu rocznych wartości maksymalnych ciśnienia atmosferycznego w okresie letnim. Dane te posłużą w dalszej części analizy do estymacji ekstremalnych poziomów ciśnienia (tzw. poziomów zwrotu).
+Na Rysunku 2(a) przedstawiono histogram rozkładu pomiarów ciśnienia atmosferycznego latem. Rozkład ten ma dzwonowaty kształ, zbliżony do normalnego. Rysunek 2(b) prezentuje wykres rozrzutu rocznych wartości maksymalnych ciśnienia atmosferycznego w okresie letnim. Dane te posłużą w dalszej części analizy do estymacji ekstremalnych poziomów ciśnienia (tzw. poziomów zwrotu).
 
 ```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='(a) Histogram rozkładu pomiarów ciśnienia oraz (b) wykres rozrzutu maksimów rocznych'}
 knitr::include_graphics("histogram-rozrzut.png")
 ```
 
   
-# 2. Model I: dopasowanie najlepszego rozkładu
-  
-# 3. Model II: metoda maksimów blokowych (BMM)
-  
-# 4. Model III: metoda przekroczeń progu (POT)
+# Model I: dopasowanie najlepszego rozkładu
 
-# 5. Wnioski
+Pierwszy model estymuje poziomy zwrotu opierając się na dopasowaniu rozkładu do maksimów godzinowych ciśnienia w okresie letnim, korzystając z biblioteki `gamlss`. Najlepszym dopasowanym rozkładem według kryterium AIC (Akaike Information Criterion) jest rozkład ST1, czyli Skew t (Azzalini type 1), który jest rozszerzeniem rozkładu t-Studenta o parametr skośności. Rozkład ST1 może być asymetryczny.
+
+Gęstość prawdopodobieństwa rozkładu Skew t (Azzalini type 1) można zapisać jako:
+
+$$f(x) = \frac{2}{\sigma \sqrt{\pi (1 + \delta^2)}} \left[ 1 + \left(\frac{x - \mu}{\sigma}\right)^2 \right]^{-(\nu + 1)/2} \left[ 1 + \delta \cdot \left(\frac{x - \mu}{\sigma}\right) \right] \Phi\left(\delta \cdot \frac{x - \mu}{\sigma} \right),$$
+gdzie:
+
+- $\mu$ - parametr lokalizacji (odpowiednik średniej),
+- $\sigma$ - parametr skali (odpowiednik odchylenia standardowego),
+- $\nu$ - liczba stopni swobody (parametr t-Studenta),
+- $\delta$ - parametr asymetrii (skewness),
+- $\Phi$ - funkcja dystrybuanty rozkładu normalnego standardowego.
+
+W Tabeli 2 przedstawiono dopasowane parametry z rozkładu ST1:
+
+```{r echo=FALSE}
+knitr::kable(tabela_st1, row.names = FALSE, col.names = c("$\\mu$", "$\\sigma$", "$\\nu$", "$\\tau$"),
+             caption = "Wyestymowane parametry rozkładu ST1")
+```
+
+Wykresy diagnostyczne na Rysunku 3 wskazują na dobre dopasowanie. Na wykresie kwantyl-kwantyl (QQ-plot) widzimy, że punkty układają się wdłóż linii $y=x$, co sugeruje, że empiryczny rozkład danych dobrze odpowiada rozkładowi teoretycznemu ST1.
+
+```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='Wykresy diagnostyczne'}
+knitr::include_graphics("diagnostyczne-st1.png")
+```
+
+Korzystając z kwantyli dopasowanego rozkładu ST1 możemy wyestymować 20-letni i 50-letni poziom zwrotu ($x_{20}$ i $x_{50}$). Ponieważ analizowane dane to maksima godzinowe, to raz na 20 lat oznacza raz na $k = 20 \cdot n_y \cdot 24$, gdzie $n_y$ to liczba dni w sezonie letnim. Zatem wyliczamy:
+
+$$n_y = 30+31+31,$$
+$$k_{20}=20 \cdot n_y \cdot 24, \quad k_{50}=50 \cdot n_y \cdot 24,$$
+$$x_{20}=q(1-\frac{1}{k_{20}}), \quad x_{50}=q(1-\frac{1}{k_{50}}).$$
+Obliczone wartości dla poziomów zwrotu wynoszą odpowiednio 1017.384 dla $x_{20}$ oraz 1018.751 dla $x_{50}$. Wynika stąd, że średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1017.384 hPa, a raz na 50 lat przekroczy 1018.751 hPa. W analizowanym okresie liczba przekroczeń tych progów wyniosła 0, co ilustruje Rysunek 4.
+
+```{r echo=FALSE, fig.align='center', out.width='70%', fig.cap='Histogram z oznaczonymi poziomami zwrotu'}
+knitr::include_graphics("histogram-x.png")
+```
+
+# Model II: metoda maksimów blokowych (BMM)
+
+Zamiast szukać rozkładu wyjaśniającego całość zjawiska, w drugim modelu skupimy się na poszukiwaniach rozkładu dobrze modelującego wartości ekstremalne.
+
+**Twierdzenie Fishera-Tippetta (1928)** \
+Niech $X_1, X_2, \ldots, X_n$ będzie ciągiem niezależnych zmiennych losowych o takim samym rozkładzie i niech $M_n = \max(X_1, X_2, \ldots, X_n)$, $n \geq 2$. Jeśli istnieją ciągi liczb $(a_n,b_n)$ takie, że $a_n > 0$ oraz
+$$\lim_{n \to \infty} P(\frac{M_n-b_n}{a_n}\leq x)= H(x),$$
+gdzie $H$ jest niezdegenerowaną dystrybuantą, to $H$ należy do jednej z trzech rodzin rozkładów: Weibulla, Gumbela lub Frecheta.
+
+Rozkłady Weibulla, Gumbela i Frecheta tworzą uogólniony rozkład wartości ekstremalych (GEV, Generalized Extreme Value distribution):
+$$H_{\xi}(x)=\exp(-(1+\xi \cdot \frac{x-\mu}{\sigma})_+^{-1/\xi}), \quad \xi \neq 0$$
+$$H_{0}(x)=\exp(-\exp(\frac{x-\mu}{\sigma})), \quad \xi=0,$$
+gdzie:
+
+- $\xi < 0$ rozkład Weibulla,
+- $\xi = 0$ rozkład Gumbela,
+- $\xi > 0$ rozkład Frecheta.
+
+Twierdzenie Fishera-Tippetta jest podstawą metody maximów blokowych:
+
+- dane dzielimy na $m$ niezachodzących na siebie bloków, każdy o równej długości $n$ – w tej analizie wykorzystamy dane roczne,
+- z każdego bloku wybieramy wartość największą $M_1, M_2, \ldots, M_m$,
+- na podstawie uzyskanych $m$ niezależnych obserwacji, estymujemy parametry $\mu$, $\sigma$, $\xi$ rozkładu GEV.
+
+Na Rysunku 5 przedstawiono wykresy diagnostyczne dopasowania rozkładu GEV do maksimów rocznych letnich ciśnienia. Wykres kwantylowy wskazuje na słabe dopasowanie rozkładu GEV do danych empirycznych.
+
+```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='Wykresy diagnostyczne'}
+knitr::include_graphics("diagnostyczne-gev.png")
+```
+
+W Tabeli 3 zestawiono dopasowane parametry z rozkładu GEV:
+
+```{r echo=FALSE}
+knitr::kable(tabela_gev, row.names = FALSE, col.names = c("$\\mu$", "$\\sigma$", "$\\xi$"),
+             caption = "Wyestymowane parametry rozkładu GEV")
+```
+
+Poziomy zwrotu $x_{20}$ i $x_{50}$ możemy wyznaczyć jako kwantyle rozkładu GEV rzędu 0.95 oraz 0.98 odpowiednio. Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1010.489$. Zatem średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1010.458 hPa, a raz na 50 lat przekroczy 1010.489 hPa. Liczba przekroczeń obu poziomów zwrotu w zbiorze danych to 4, a daty oraz wielkości przekroczeń są wspólne dla obu progów i zostały zestawione w Tabeli 4.
+
+```{r echo=FALSE}
+knitr::kable(przekroczenia_x20.2, row.names = FALSE,
+             col.names = c("Rok", "Miesiąc", "Dzień", "Godzina", "Ciśnienie"),
+             caption = "Przekroczenia poziomów zwrotu $x_{20}$ i $x_{50}$")
+```
+  
+# Model III: metoda przekroczeń progu (POT)
+
+
+
+# Wnioski
 
 Zestawienie wyników modeli...
 ```{r echo=FALSE}
