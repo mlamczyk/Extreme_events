@@ -4,6 +4,9 @@ library(ggplot2)
 library(fitdistrplus)
 library(ismev)
 library(evir)
+library(leaflet)
+library(htmlwidgets)
+library(webshot2)
 
 ### WCZYTANIE DANYCH ###
 
@@ -21,17 +24,20 @@ unique(dane_meteo$Nazwa)
 # Chojnice znajdują się w północnej Polsce, niedaleko Borów Tucholskich.
 # Jest to obszar o klimacie umiarkowanym z wyraźnymi sezonowymi różnicami temperatur i ciśnienia.
 
-library(leaflet)
-library(htmlwidgets)
 
 # Tworzymy mapę i dodajemy marker w Chojnicach
-leaflet() %>%
+mymap <- leaflet() %>%
   addTiles() %>%  # Domyślna mapa OpenStreetMap
-  setView(lng = 17.5584, lat = 53.6978, zoom = 10) %>%
+  setView(lng = 19.5, lat = 52.3, zoom = 6) %>%
   addMarkers(lng = 17.5584, lat = 53.6978, popup = "Stacja meteorologiczna Chojnice")
 
-# Zapisujemy mapę do pliku HTML
-# saveWidget(mapa, file = "mapa_chojnice.html", selfcontained = TRUE)
+mymap
+
+# Zapisujemy mapę jako plik HTML
+saveWidget(mymap, "mapa.html", selfcontained = TRUE)
+
+# Zapisujemy zrzut ekranu do pliku PNG
+webshot("mapa.html", file = "mapa.png", vwidth = 800, vheight = 600)
 
 
 ### PRZYGOTOWANIE DANYCH ###
@@ -60,12 +66,31 @@ m_dane <- as.numeric(dane_max$cisnienie)
 # Wybieramy kolumnę ciśnienia
 dane <- dane_lato$cisnienie
 length(dane)
+sum(is.na(dane))
+# nie ma braków w pomiarach
+
+# Podstawowe statystyki
+statystyki <- summary(dane)
+odchylenie_standardowe <- sd(dane)
+tabela_statystyk <- data.frame(
+  Statystyka = c("Wartość minimalna", "Mediana", "Średnia", "Odchylenie standardowe", "Wartość maksymalna"),
+  Wartość = c(statystyki["Min."],statystyki["Median"],statystyki["Mean"],odchylenie_standardowe,statystyki["Max."])
+)
+tabela_statystyk
 
 
 ### DOPASOWANIE NAJLEPSZEGO ROKŁADU GAMLSS ###
 
 # Nasze dane to maksima godzinowe z każdego dnia lata (czerwiec, lipiec, sierpień) przez 15 lat (2006-2020)
-hist(dane, prob=T, main="Rozkład ciśnienia", xlab=NA)
+# Histogram rozkładu pomiarów ciśnienia
+png("histogram-rozrzut.png", width=800, height=300)
+par(mfrow=c(1,2))
+hist(dane, prob=T, main="Rozkład ciśnienia", xlab="Ciśnienie [hPa]")
+
+# Wykres rozrzutu maksimów roczynch ciśnienia
+plot(dane_max$Rok, dane_max$cisnienie, main="Maksima roczne ciśnienia latem (2006-2020)",
+     xlab="Rok", ylab="Maksymalne ciśnienie [hPa]", pch=19)
+dev.off()
 
 # Dopasowujemy rozkłady z `gamlss`
 #?fitdist
@@ -127,17 +152,6 @@ plot(ecdf(dane), main="Dystrybuanta empiryczna vs teoretyczna")
 curve(pST1(x, mu, sigma, nu, tau), col="red", add=TRUE)
 
 
-# -----
-# Wykresy diagnostyczne z biblioteki `fitdistrplus` - nie działają;
-# trzeba ponownie wyestymowac parametry rozkladu ST1
-
-#X <- as.numeric(na.omit(dane))
-#fST1 <- fitdist(X, "ST1", start=list(mu=mu, sigma=sigma, nu=nu, tau=tau))
-#plot(fST1)
-
-# -----
-
-
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
 
 # Dopasowujemy rozkład, obliczamy kwantyl x_20 przeliczamy z godzin na lata ->
@@ -163,12 +177,6 @@ abline(v=x20.1, col="blue", lwd=2, lty=2)
 abline(v=x50.1, col="purple", lwd=2, lty=2)
 legend("topleft", legend=c("ST1 fit", "x20", "x50"),
        col=c("red", "blue", "purple"), lty=c(1,2,2), lwd=2)
-
-#============  nowe dane, wyniki estymacji warto zapisac w pliku TwojaNazwa.Rdata
-#save(maxday,fGT,file="C:/Users/.../Dane/TwojaNazwa.Rdata")
-
-#ladowanie danych zapisanych w formacie RData
-#dane <- lode(file="C:/Users/.../Dane/TwojaNazwa.Rdata")
 
 
 ### METODA MAKSIMÓW BLOKOWYCH (BMM) ###
@@ -317,5 +325,20 @@ x_20; x_50
 cat("Model 1, x20:", x20.1, ", x50:", x50.1)
 cat("Model 2, x20:", x20.2, ", x50:", x50.2)
 cat("Model 3, x20:", x20.3, ", x50:", x50.3)
-cat("Model 3 (evir), x20:", x_20, ", x50:", x_50)
+cat("Model 3 (evir), x20:", x_20, ", x50:", x_50) # wychodzi tak samo jak ręcznie
 
+tabela_wynikow <- data.frame(
+  x20 = c(x20.1, x20.2, x20.3),
+  x50 = c(x50.1, x50.2, x50.3),
+  row.names = c("Model 1", "Model 2", "Model 3")
+)
+tabela_wynikow
+
+
+
+# Nowe dane, wyniki estymacji zapisujemy w pliku Wyniki.Rdata
+save(tabela_statystyk, tabela_wynikow,
+     file="Wyniki.Rdata")
+
+# Ładowanie danych zapisanych w formacie RData
+# dane <- load(file="Wyniki.Rdata")

@@ -1,0 +1,68 @@
+---
+title: "Analiza maksimów ciśnienia atmosferycznego"
+author: "Magdalena Lamczyk"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+  
+\newpage
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+load(file="Wyniki.Rdata")
+```
+  
+# Wstęp
+  
+Głównym celem projektu jest wyestymowanie 20-letniego oraz 50-letniego poziomu zwrotu (które oznaczamy odpowiednio przez $x_{20}$ oraz $x_{50}$) dla sezonu letniego (czerwiec, lipiec, sierpień).
+
+Dane do analizy pochodzą ze strony https://danepubliczne.imgw.pl/pl/datastore. Pomiar parametrów atmosferycznych odbywa się regularnie, najczęściej w godzinnych interwałach, a dane są gromadzone i archiwizowane w systemie zarządzania danymi meteorologicznymi.
+
+## Charakterystyka stacji meteorologicznej w Chojnicach
+
+Stacja meteorologiczna w Chojnicach znajduje się w północno-zachodniej części Polski, w województwie pomorskim. Miejscowość ta leży na wysokości około 50 m n.p.m., a współrzędne geograficzne stacji to:
+
+- Szerokość geograficzna: 53.6726° N
+- Długość geograficzna: 17.5940° E
+
+Chojnice są zlokalizowane w pobliżu granicy Pomorza i Kujaw, co wpływa na specyficzne warunki klimatyczne w tym regionie. Miasto to znajduje się niedaleko Borów Tucholskich, w obszarze o klimacie umiarkowanym z wyraźnymi sezonowymi różnicami temperatur i ciśnienia.
+
+```{r echo=FALSE, fig.align='center', out.width='60%', fig.cap='Chojnice na mapie Polski'}
+knitr::include_graphics("mapa.png")
+```
+  
+# 1. Podstawowe informacje o danych
+
+Dane pochodzą z 15-letniego okresu (2006-2020) dla stacji meteorologicznej w Chojnicach. Pomiary ciśnienia atmosferycznego (hPa) zostały zebrane w godzinnych interwałach. Do analizy wykorzystamy maksima ciśnienia atmosferycznego z każdego dnia lata (czerwiec-sierpień).
+
+Sprawdzono status pomiarów ciśnienia (czy ciśnienie zostało zmierzone poprawnie). Wszystkie pomiary latem (czerwiec-sierpień) mają status "8", co sugeruje, że dane są kompletne, a pomiar ciśnienia jest wiarygodny.
+
+Tabela 1 zawiera podstawowe statystyki opisowe dla ciśnienia atmosferycznego w miesiącach letnich (czerwiec–sierpień) w Chojnicach w latach 2006–2020. Minimalna wartość ciśnienia wyniosła 968.9 hPa, natomiast maksymalna osiągnęła 1010.5 hPa. Mediana (994.4 hPa) i średnia (994.24 hPa) są do siebie bardzo zbliżone, co sugeruje symetryczny rozkład danych. Odchylenie standardowe rzędu 5.76 hPa wskazuje na umiarkowane zróżnicowanie ciśnień w badanym okresie.
+
+```{r echo=FALSE}
+knitr::kable(tabela_statystyk, row.names = FALSE,
+             caption = "Podstawowe statystyki ciśnienia atmosferycznego latem w Chojnicach")
+```
+
+Na Rysunku 2(a) przedstawiono histogram rozkładu pomiarów ciśnienia atmosferycznego latem. Rysunek 2(b) prezentuje wykres rozrzutu rocznych wartości maksymalnych ciśnienia atmosferycznego w okresie letnim. Dane te posłużą w dalszej części analizy do estymacji ekstremalnych poziomów ciśnienia (tzw. poziomów zwrotu).
+
+```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='(a) Histogram rozkładu pomiarów ciśnienia oraz (b) wykres rozrzutu maksimów rocznych'}
+knitr::include_graphics("histogram-rozrzut.png")
+```
+
+  
+# 2. Model I: dopasowanie najlepszego rozkładu
+  
+# 3. Model II: metoda maksimów blokowych (BMM)
+  
+# 4. Model III: metoda przekroczeń progu (POT)
+
+# 5. Wnioski
+
+Zestawienie wyników modeli...
+```{r echo=FALSE}
+knitr::kable(tabela_wynikow, caption = "Poziomy zwrotu $x_{20}$ i $x_{50}$ dla różnych modeli")
+```
+
