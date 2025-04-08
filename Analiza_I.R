@@ -34,10 +34,10 @@ mymap <- leaflet() %>%
 mymap
 
 # Zapisujemy mapę jako plik HTML
-saveWidget(mymap, "mapa.html", selfcontained = TRUE)
+#saveWidget(mymap, "mapa.html", selfcontained = TRUE)
 
 # Zapisujemy zrzut ekranu do pliku PNG
-webshot("mapa.html", file = "mapa.png", vwidth = 800, vheight = 600)
+#webshot("mapa.html", file = "mapa.png", vwidth = 800, vheight = 600)
 
 
 ### PRZYGOTOWANIE DANYCH ###
@@ -83,14 +83,14 @@ tabela_statystyk
 
 # Nasze dane to maksima godzinowe z każdego dnia lata (czerwiec, lipiec, sierpień) przez 15 lat (2006-2020)
 # Histogram rozkładu pomiarów ciśnienia
-png("histogram-rozrzut.png", width=800, height=300)
+#png("histogram-rozrzut.png", width=800, height=300)
 par(mfrow=c(1,2))
 hist(dane, prob=T, main="(a) Rozkład ciśnienia", xlab="Ciśnienie [hPa]")
 
 # Wykres rozrzutu maksimów roczynch ciśnienia
 plot(dane_max$Rok, dane_max$cisnienie, main="(b) Maksima roczne ciśnienia latem (2006-2020)",
      xlab="Rok", ylab="Maksymalne ciśnienie [hPa]", pch=19)
-dev.off()
+#dev.off()
 
 # Dopasowujemy rozkłady z `gamlss`
 #?fitdist
@@ -131,7 +131,7 @@ tabela_st1
 
 # plotdist(dane, histo = TRUE, demp = TRUE)
 
-png("diagnostyczne-st1.png", width=800, height=500)
+#png("diagnostyczne-st1.png", width=800, height=500)
 par(mfrow=c(2,2))
 
 # Histogram z gęstością teoretyczną
@@ -149,7 +149,7 @@ abline(a=0, b=1, col="red")
 # Dystrybuanta empiryczna vs teoretyczna
 plot(ecdf(dane), main="Dystrybuanta empiryczna vs teoretyczna")
 curve(pST1(x, mu, sigma, nu, tau), col="red", add=TRUE)
-dev.off()
+#dev.off()
 
 
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
@@ -180,7 +180,7 @@ cat("Liczba przekroczeń x20:", liczba_x20.1, "\n") # 0
 cat("Liczba przekroczeń x50:", liczba_x50.1, "\n") # 0
 
 # Histogram z oznaczonymi poziomami zwrotu
-png("histogram-x.png", width=800, height=400)
+#png("histogram-x.png", width=800, height=400)
 par(mfrow=c(1,1))
 hist(dane, prob=TRUE, main="Rozkład ciśnienia z poziomami zwrotu", xlab="Ciśnienie",
      col="lightgray", border="black", xlim=c(965,1020))
@@ -189,7 +189,7 @@ abline(v=x20.1, col="blue", lwd=2, lty=2)
 abline(v=x50.1, col="purple", lwd=2, lty=2)
 legend("topleft", legend=c("ST1 fit", "x20", "x50"),
        col=c("red", "blue", "purple"), lty=c(1,2,2), lwd=2)
-dev.off()
+#dev.off()
 
 
 ### METODA MAKSIMÓW BLOKOWYCH (BMM) ###
@@ -210,9 +210,9 @@ tabela_gev <- data.frame(
 tabela_gev
 
 # Wykresy diagnostyczne ismev
-png("diagnostyczne-gev.png", width=800, height=500)
+#png("diagnostyczne-gev.png", width=800, height=500)
 ismev::gev.diag(fit.m)
-dev.off()
+#dev.off()
 
 # Estymacja parametrów GEV w fExtremes
 #fit.f <- fExtremes::gevFit(m_dane)
@@ -288,7 +288,7 @@ u <- quantile(dane, 0.95)
 u
 
 # Wykresy rozrzutu z zaznaczonym progiem u
-png("rozrzut-nadwyzki.png", width=800, height=500)
+#png("rozrzut-nadwyzki.png", width=800, height=500)
 par(mfrow=c(2,1))
 plot(dane, type="h", main="(a) Wykres rozrzutu z zaznaczonym progiem u")
 abline(h=u, lwd=2, col='red')
@@ -296,7 +296,7 @@ abline(h=u, lwd=2, col='red')
 # Nadwyżki nad progiem u
 Y <- dane[dane > u] - u
 plot(Y, type='h', main="(b) Nadwyżki nad progiem u")
-dev.off()
+#dev.off()
 
 # Liczba obserwacji przekraczających próg u = kwantyl 95%
 przekroczenia_u <- sum(dane > u)
@@ -327,9 +327,9 @@ qqplot(Y, evir::qgpd(ppoints(1000),xi,0,beta), main="QQ-plot")
 abline(a=0,b=1,col=2)
 
 # Wykresy dopasowania
-png("diagnostyczne-gpd.png", width=800, height=500)
+#png("diagnostyczne-gpd.png", width=800, height=500)
 ismev::gpd.diag(fitGPD)
-dev.off()
+#dev.off()
 
 ### OBLICZENIE POZIOMÓW ZWROTU x20 i x50 ###
 
@@ -350,19 +350,6 @@ liczba_x50.3 <- nrow(przekroczenia_x50.3)
 
 cat("Liczba przekroczeń x20:", liczba_x20.3, "\n") # 1671
 cat("Liczba przekroczeń x50:", liczba_x50.3, "\n") # 658
-
-# Wykres
-png("progi.png", width=800, height=500)
-par(mfrow=c(1,1))
-plot(dane, type="h", main="Wykres rozrzutu")
-abline(h=u, lwd=2, col='red')
-abline(h=x20.3, lwd=2, col='green')
-abline(h=x50.3, lwd=2, col='blue')
-legend("bottomleft",
-       legend=c("u", "x20", "x50"),  # opisy
-       col=c("red", "green", "blue"),
-       lwd=2)
-dev.off()
 
 
 # Z wbudowanej funkcji

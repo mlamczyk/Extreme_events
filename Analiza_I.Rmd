@@ -182,11 +182,7 @@ Poziomy zwrotu $x_{20}$ i $x_{50}$ wyznaczamy korzystając z poniższych wzorów
 $$x_k = u + \frac{\beta}{\xi}((k\cdotp)^\xi-1), \quad \xi \neq 0$$
 $$x_k = u + \beta \ln(k\cdot p), \quad \xi = 0.$$
 
-Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1006.056$. Wówczas średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1003.121 hPa, a raz na 50 lat przekroczy 1006.056 hPa. Liczba przekroczeń poziomów zwrotu $x_{20}$ w zbiorze danych to 1671, natomiast poziom zwrotu $x_{50}$ przekracza 658 pomiarów ze zbioru danych. Poziomy zwrotu wyliczone metodą POT oraz ręcznie wybrany próg $u$ zostały przedstawione na Rysunku 8.
-
-```{r echo=FALSE, fig.align='center', out.width='70%', fig.cap='Wykres z progiem u oraz poziomami zwrotu x20 i x50'}
-knitr::include_graphics("progi.png")
-```
+Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1006.056$. Wówczas średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1003.121 hPa, a raz na 50 lat przekroczy 1006.056 hPa. Liczba przekroczeń poziomów zwrotu $x_{20}$ w zbiorze danych to 1671, natomiast poziom zwrotu $x_{50}$ przekracza 658 pomiarów ze zbioru danych.
 
 # Wnioski
 
