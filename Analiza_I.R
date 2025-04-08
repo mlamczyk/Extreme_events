@@ -378,9 +378,9 @@ tabela_wynikow
 
 
 # Nowe dane, wyniki estymacji zapisujemy w pliku Wyniki.Rdata
-save(tabela_statystyk, tabela_wynikow, tabela_st1, tabela_gev,
-     przekroczenia_x20.2, tabela_gpd,
-     file="Wyniki.Rdata")
+#save(tabela_statystyk, tabela_wynikow, tabela_st1, tabela_gev,
+#     przekroczenia_x20.2, tabela_gpd,
+#     file="Wyniki.Rdata")
 
 # Ładowanie danych zapisanych w formacie RData
 # dane <- load(file="Wyniki.Rdata")

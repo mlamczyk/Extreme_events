@@ -74,7 +74,7 @@ knitr::kable(tabela_st1, row.names = FALSE, col.names = c("$\\mu$", "$\\sigma$",
              caption = "Wyestymowane parametry rozkładu ST1")
 ```
 
-Wykresy diagnostyczne na Rysunku 3 wskazują na dobre dopasowanie. Na wykresie kwantyl-kwantyl (QQ-plot) widzimy, że punkty układają się wdłóż linii $y=x$, co sugeruje, że empiryczny rozkład danych dobrze odpowiada rozkładowi teoretycznemu ST1.
+Wykresy diagnostyczne na Rysunku 3 wskazują na dobre dopasowanie. Na wykresie kwantyl-kwantyl (QQ-plot) widzimy, że punkty układają się wdłuż linii $y=x$, co sugeruje, że empiryczny rozkład danych dobrze odpowiada rozkładowi teoretycznemu ST1.
 
 ```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='Wykresy diagnostyczne'}
 knitr::include_graphics("diagnostyczne-st1.png")
@@ -109,7 +109,7 @@ gdzie:
 - $\xi = 0$ rozkład Gumbela,
 - $\xi > 0$ rozkład Frecheta.
 
-Twierdzenie Fishera-Tippetta jest podstawą metody maximów blokowych:
+Twierdzenie Fishera-Tippetta jest podstawą metody maksimów blokowych:
 
 - dane dzielimy na $m$ niezachodzących na siebie bloków, każdy o równej długości $n$ – w tej analizie wykorzystamy dane roczne,
 - z każdego bloku wybieramy wartość największą $M_1, M_2, \ldots, M_m$,
@@ -128,7 +128,7 @@ knitr::kable(tabela_gev, row.names = FALSE, col.names = c("$\\mu$", "$\\sigma$",
              caption = "Wyestymowane parametry rozkładu GEV")
 ```
 
-Poziomy zwrotu $x_{20}$ i $x_{50}$ możemy wyznaczyć jako kwantyle rozkładu GEV rzędu 0.95 oraz 0.98 odpowiednio. Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1010.489$. Zatem średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1010.458 hPa, a raz na 50 lat przekroczy 1010.489 hPa. Liczba przekroczeń obu poziomów zwrotu w zbiorze danych to 4, a daty oraz wielkości przekroczeń są wspólne dla obu progów i zostały zestawione w Tabeli 4.
+Poziomy zwrotu $x_{20}$ i $x_{50}$ możemy wyznaczyć jako kwantyle rozkładu GEV rzędu 0.95 oraz 0.98 odpowiednio. Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1010.489$. Zatem średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1010.458 hPa, a raz na 50 lat przekroczy 1010.489 hPa. Liczba przekroczeń obu poziomów zwrotu w zbiorze danych to 4, a daty oraz wielkości przekroczeń są wspólne dla obu progów i zostały zestawione w Tabeli 4.
 
 ```{r echo=FALSE}
 knitr::kable(przekroczenia_x20.2, row.names = FALSE,
@@ -172,17 +172,17 @@ knitr::kable(tabela_gpd, row.names = FALSE, col.names = c("$\\xi$", "$\\beta$"),
              caption = "Wyestymowane parametry rozkładu GPD")
 ```
 
-Dopasowanie rozkładu GDP do danych empirycznych możemy ocenic na podstawie wykresów na Rysunku 7. Wykres kwantylowy wskazuje na bardzo dobre dopasowanie rozkładu GEV do danych empirycznych.
+Dopasowanie rozkładu GPD do danych empirycznych możemy ocenić na podstawie wykresów na Rysunku 7. Wykres kwantylowy wskazuje na bardzo dobre dopasowanie rozkładu GPD do danych empirycznych.
 
 ```{r echo=FALSE, fig.align='center', out.width='90%', fig.cap='Wykresy diagnostyczne'}
 knitr::include_graphics("diagnostyczne-gpd.png")
 ```
 
 Poziomy zwrotu $x_{20}$ i $x_{50}$ wyznaczamy korzystając z poniższych wzorów
-$$x_k = u + \frac{\beta}{\xi}((k\cdotp)^\xi-1), \quad \xi \neq 0$$
+$$x_k = u + \frac{\beta}{\xi}((k\cdot p)^\xi-1), \quad \xi \neq 0$$
 $$x_k = u + \beta \ln(k\cdot p), \quad \xi = 0.$$
 
-Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1006.056$. Wówczas średnio średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1003.121 hPa, a raz na 50 lat przekroczy 1006.056 hPa. Liczba przekroczeń poziomów zwrotu $x_{20}$ w zbiorze danych to 1671, natomiast poziom zwrotu $x_{50}$ przekracza 658 pomiarów ze zbioru danych.
+Obliczone wartości poziomów zwrotu wynoszą $x_{20}=1010.458$ oraz $x_{50}=1006.056$. Wówczas średnio raz na 20 lat ciśnienie atmosferyczne latem w Chojnicach przekroczy 1003.121 hPa, a raz na 50 lat przekroczy 1006.056 hPa. Jednakowoż liczba przekroczeń poziomów zwrotu $x_{20}$ w badanym zbiorze danych to 1671, natomiast poziom zwrotu $x_{50}$ przekracza 658 pomiarów ze zbioru danych. Możliwe, że wybrany próg $u$ był zbyt niski.
 
 # Wnioski
 
@@ -192,8 +192,10 @@ W Tabeli 6 zostały zestawione poziomy zwrotu wyznaczone trzema metodami.
 knitr::kable(tabela_wynikow, caption = "Poziomy zwrotu $x_{20}$ i $x_{50}$ dla różnych modeli")
 ```
 
+Oszacowania poziomów zwrotu są obarczone niepewnością i w dłuższych okresach dane mogą się zmienić (np. przez zmianę klimatu).
+
 Model I przewiduje najgrubsze ogony. Poziomy zwrotu z tego modelu są najwyższe, a wśród pomiarów z badanego okresu (sezon letni w latach 2006-2020) nie wystąpiły przekroczenia tych poziomów.
 
-Poziomy zwrotu w Modelu II zostały wyznaczone z maksimów rocznych letnich ciśnienia. Danych było bardzo mało (15 wartości), co może nie być wystarczające aby dobrze dopasować rozkład. Potwierdza to wykres dopasowania kwantyl-kwantyl, który wskazuje na słabe dopasowanie rozkładu teoretycznego GEV do danych empirycznych. Stąd wyniki mogą nie być wiarygodne. Poziomy zwrotu 20-letnie i 50-letnie wyznaczone tą metodą są do siebie bardzo zbliżone.
+Poziomy zwrotu w Modelu II zostały wyznaczone z maksimów rocznych letnich ciśnienia, zatem danych wykorzystanych do dopasowania modelu było bardzo mało (15 wartości). Niewystarczająca ilość danych może prowadzić do dużej niepewności w oszacowaniach parametrów, a także wpływać na dużą wariancję poziomów zwrotu. Słabe dopasowanie rozkładu GEV do danych empirycznych potwierdza wykres kwantyl-kwantyl. Stąd wyniki tej metody mogą nie być wiarygodne. Ponadto poziomy zwrotu 20-letnie i 50-letnie wyznaczone tą metodą są do siebie bardzo zbliżone.
 
-Model III estymuje najniższe wartości poziomów zwrotu.
+Model III estymuje najniższe wartości poziomów zwrotu. Wyniki metody POT są silnie zależne od doboru progu $u$. Liczba przekroczeń progów wyznaczonych przez trzeci model wydaje się być niezgodna z intuicją - średnio raz na $k$ lat miały wystąpić przekroczenia, a tymczasem w 15-letnim okresie zarejestrowano ich znacznie więcej.
