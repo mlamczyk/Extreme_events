@@ -1,0 +1,243 @@
+---
+title: "Zależności analizowane kopułami"
+author: "Wiktoria Sarabon, Magdalena Lamczyk, Jakub Galikowski"
+output: 
+  pdf_document: default
+  word_document: default
+  html_document: default
+---
+  
+\newpage
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+load(file="Wyniki_2.Rdata")
+```
+
+
+# Wstęp
+
+Głównym celem tego projektu jest przeanalizowanie zależności między trzema wybranymi zmiennymi meteorologicznymi ($X_1$ - temperatura, $X_2$ - ciśnienie, $X_3$ - prędkość wiatru) z sezonu letniego w latach 2006-2020 dla stacji w Chojnicach, ozn. $s_0$. Przeprowadzona analiza polegała na dobraniu odpowiednich kopuł dwuwymiarowych opisujących współzależność między zmiennymi, a następnie wyznaczeniu warunkowego rozkładu temperatury przy założeniu ekstremalnych wartości pozostałych zmiennych. Zastosowano dwa modele: parametryczny oraz nieparametryczny. Metoda nieparametryczna nie wprowadza żadnych założeń o kształcie rozkładu. Jest bardziej elastyczna, na przykład w przypadku nietypowych lub asymetrycznych danych. Natomiast metoda parametryczna, oparta na określonym modelu rozkładu, może być bardziej efektywna, jeżeli przyjęte założenia odpowiadają rzeczywistości.
+
+
+# Zadanie 1
+
+Zmienna $X_3$, opisująca prędkość wiatru, przyjmuje tylko wartości całkowite, więc jest zmienną dyskretną. Może to powodować trudności przy analizie z użyciem kopuł, ponieważ klasyczna teoria kopuł zakłada, że zmienne brzegowe są ciągłe.
+Zgodnie z twierdzeniem Sklara (1959), każdy rozkład $d$-wymiarowego wektora losowego $X = (X_1, \ldots, X_d)$ można zapisać za pomocą funkcji kopuły:
+$$F(x_1, \ldots, x_d) = C(F_1(x_1), \ldots, F_d(x_d)),$$
+gdzie $F_i$ to dystrybuanty brzegowe, a $C$ to funkcja kopuły, opisująca zależność między zmiennymi. Gdy zmienne są ciągłe, kopuła jest wyznaczona jednoznacznie, a gęstość wspólna ma postać:
+$$f(x_1, \ldots, x_d) = c(F_1(x_1), \ldots, F_d(x_d)) \cdot f_1(x_1) \ldots f_d(x_d),$$
+gdzie $c$ to gęstość kopuły.
+W przypadku zmiennych dyskretnych, takich jak $X_3$, dystrybuanty mają skoki, więc kopuła nie jest jednoznacznie wyznaczona. Dlatego do każdej wartości $X_3$ dodajemy niewielki losowy szum z rozkładu jednostajnego $U(-0.5, 0.5)$. Dzięki temu zmienna staje się quasi-ciągła, co pozwala zastosować klasyczne techniki estymacji kopuł.
+
+Rozkłady brzegowe zmiennych temperatury, ciśnienia i prędkości wiatru zostały dopasowane w pierwszej części projektu (Analiza I). W tej części wykorzystujemy je do dalszej analizy, dlatego w  ramach przypomnienia zestawiamy ich nazwy w poniższej tabeli oraz przedstawiamy histogramy z nałożonymi dopasowanymi gęstościami na Rysunku 1.
+
+| Zmienna          | Rozkład   | Typ parametryczny             |
+|------------------|-----------|-------------------------------|
+| Temperatura      | SHASHo2   | Sinh-Arcsinh                  |
+| Ciśnienie        | ST1       | Skew-t (Azzalini type 1)      |
+| Prędkość wiatru  | JSU       | Johnson SU                    |
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='60%', fig.cap='Histogramy rozkładów brzegowych z gęstościami'}
+knitr::include_graphics("histogramy-gestosc.png")
+```
+
+## Analiza kopułowa zmiennych $X_1$ i $X_2$ (temperatura i ciśnienie)
+
+
+## Analiza kopułowa zmiennych $X_3$ i $X_1$ (prędkość wiatru i temperatura)
+
+
+## Analiza kopułowa zmiennych $X_2$ i $X_3$ (ciśnienie i prędkość wiatru)
+
+Aby opisać zależność między zmiennymi $X_2$ (ciśnienie atmosferyczne) i $X_3$ (prędkość wiatru), zastosowano dwie metody konstrukcji pseudo-obserwacji: nieparametryczną i parametryczną. W obu podejściach wybrano najlepszą kopułę przy użyciu funkcji `BiCopSelect()` z pakietu `VineCopula`, kierując się wartością kryterium informacyjnego Akaikego (AIC). Dla obserwacji $u_{i,j}$, gdzie $i = 1, \ldots, N$, $j = 1,2$, wartość kryterium AIC dla dwuwymiarowej rodziny kopuł $c$ z parametrem (parametrami) $\theta$ definiuje się jako
+$$\mathrm{AIC} := -2 \sum_{i=1}^N \ln\left[ c(u_{i,1}, u_{i,2} \mid \theta) \right] + 2k,$$
+gdzie $k = 2$ dla kopuł z dwoma parametrami takich jak t-Studenta, BB1, BB6, BB7 oraz BB8.
+Dla obu metod przedstawiono wykresy rozrzutu oraz porównano parametry wybranych kopuł, a także współczynniki $\tau$ Kendalla – zarówno empiryczne, jak i wynikające z dopasowanej kopuły (teoretyczne). Ponadto wyestymowano współczynniki zależności ekstremalnej dolnej i górnej, które następnie porównano z teoretycznymi wartościami uzyskanymi na podstawie dopasowanych kopuł.
+
+Na Rysunku 2 została przedstawiona zależność między ciśnieniem a prędkością wiatru. Wykres rozrzutu wskazuje na brak silnej zależności lub jest ona bardzo złożona. Punkty nie tworzą żadnego trendu, są rozproszone.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Wykres rozrzutu z histogramami rozkładów brzegowych'}
+knitr::include_graphics("rozrzut-histogramy.png")
+```
+
+W podejściu nieparametrycznym wygenerowano pseudo-obserwacje na podstawie empirycznych dystrybuant zmiennych $X_2$ i $X_3$, korzystając z funkcji `pobs()`. Tak uzyskane pseudo-obserwacje oznaczono jako $U = (u_2, u_3)$. Dodatkowo, aby umożliwić dopasowanie kopuł, przekształcono je za pomocą kwantyla rozkładu normalnego, otrzymując dane $Y = (y_2, y_3)$.
+
+Wykresy przedstawione na Rysunku 3 ilustrują, rozrzut oryginalnych danych $(X_2, X_3)$, rozrzut pseudo-obserwacji $(u_2, u_3)$ oraz rozrzut transformacji normalnych $(y_2, y_3)$. Punkty na wykresie pseudo-obserwacji są rozmieszczone równomiernie na całym przedziale $[0, 1]$. Ostatni wykres pokazuje wynik transformacji pseudo-obserwacji do tak zwanych normalnych wyników dzięki zastosowaniu funkcji odwrotnej dystrybuanty rozkładu normalnego. Transformacja normalna zmieniła skalę zmiennych oraz poprawiła symetrię ich rozkładu zachowując zależności między zmiennymi.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='60%', fig.cap='Wykresy rozrzutu'}
+knitr::include_graphics("rozrzut1.png")
+```
+
+Najlepsza kopuła dopasowana metodą nieparametryczną do pseudo-obserwacji nieparametrycznych to kopuła Rotated BB1 $270^\circ$, z parametrami:
+
+|  par       |  par2      |      $\tau_{\text{teo}}$      |
+|------------|------------|-------------------------------|
+| -0.28      | -1.02      |             -0.14             |
+
+Standardowa kopuła BB1 (Joe–Clayton) dla parametrów $\theta > 0$ oraz $\delta \geq 1$ należy do klasy Archimedejskich kopuł dwuparametrowych i jest zdefiniowana wzorem:
+$$C(u,v) = 1 - \left\{ \bigl[(1-u)^\theta - 1\bigr]^\delta + \bigl[(1-v)^\theta - 1\bigr]^\delta \right\}^{1/\delta},
+\quad u,v \in [0,1].$$
+Obrócona kopuła BB1 o $270^\circ$ (Rotated BB1 $270^\circ$), w kierunku przeciwnym do ruchu wskazówek zegara, definiowana jest jako
+$$C_{270}(u,v) = u - C(u, 1 - v) + v - 1,$$
+co często zapisuje się również w postaci równoważnej
+$$C_{270}(u,v) = u - v + 1 - C(u, 1 - v).$$
+W obu przypadkach $C$ oznacza standardową kopułę BB1 podaną powyżej. Rotacja o $270^\circ$ odwraca charakter zależności modelowanej przez kopułę względem przekątnej jednostkowego kwadratu, umożliwiając modelowanie asymetrycznych zależności, szczególnie silnych w lewym ogonie rozkładu.
+
+Empiryczny współczynnik $\tau$ Kendalla wynosił około $-0.146$ i został wyznaczony na podstawie obserwacji jako
+$$\hat{\tau}_{\mathrm{emp}} = \frac{2}{N(N-1)} \sum_{i<j} \mathrm{sgn}\bigl((X_{i,2} - X_{j,2})(X_{i,3} - X_{j,3})\bigr),$$
+natomiast teoretyczna wartość $\tau$ związana z dopasowaną kopułą $C$ obliczana jest za pomocą jej parametrów.
+
+W metodzie parametrycznej wykorzystano wcześniej dopasowane rozkłady brzegowe - Skew-t typu 1 dla ciśnienia oraz Johnson SU dla prędkości wiatru. Dopasowanie zweryfikowano wizualnie za pomocą histogramów z nałożonymi gęstościami oraz wykresów QQ-plot (Rysunek 4). Zarówno dla ciśnienia atmodferycznego, jak i prędkości wiatru, empiryczne kwantyle są bardzo blisko teoretycznych. Punkty ukłądają się wzdłuż linii $45^\circ$, stąd rozkłady brzegowe zostały dobrze dopasowane do zmiennych.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Histogramy i QQ-ploty'}
+knitr::include_graphics("histogramy-qq.png")
+```
+
+Następnie obliczono pseudo-obserwacje parametryczne $V = (v_2, v_3)$ jako wartości dystrybuant brzegowych oraz dokonano transformacji normalnej do $Y = (y_2, y_3)$. Odpowiadające wykresy przedstawiono na Rysunku 5.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='60%', fig.cap='Wykresy rozrzutu'}
+knitr::include_graphics("rozrzut2.png")
+```
+
+Dla danych parametrycznych, podobnie jak w przypadku podejścia nieparametrycznego, najlepszą kopułą okazała się Rotated BB1 $270^\circ$, z parametrami:
+
+|  par       |  par2      |      $\tau_{\text{teo}}$      |
+|------------|------------|-------------------------------|
+| -0.28      | -1.02      |             -0.14             |
+
+Również w tym przypadku empiryczna wartość $\tau$ Kendalla wynosiła około $-0.146$.
+
+Poniższa tabela zestawia najważniejsze wyniki uzyskane z obu metod:
+
+| Podejście        | Typ kopuły   | Parametry kopuły               | $\tau_{\text{teo}}$ | $\tau_{\text{emp}}$ |
+|------------------|--------------|--------------------------------|--------|--------|
+| Nieparametryczne | BB1 ($270^\circ$)   | (par = -0.28, par2 = -1.02)    | -0.14  | -0.146 |
+| Parametryczne    | BB1 ($270^\circ$)   | (par = -0.28, par2 = -1.02)    | -0.14  | -0.146 |
+
+
+Zarówno podejście nieparametryczne, jak i parametryczne doprowadziły do wyboru tej samej kopuły Rotated BB1 ($270^\circ$) z identycznymi parametrami oraz bardzo zbliżonymi wartościami empirycznego i teoretycznego współczynnika $\tau$.
+
+Na Rysunku 6 zostało przedstawione porównanie wykresów rozrzutu dla danych oryginalnych, pseudo-obserwacji nieparametrycznych oraz parametrycznych. Obie metody transformacji skutecznie przekształcają dane w taki sposób, aby marginesy uzyskały rozkład zbliżony do jednostajnego, co umożliwia lepsze skupienie się na analizie zależności między zmiennymi.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='80%', fig.cap='Porównanie wykresów rozrzutu X, pseudo-obserwacji nieparametrycznych U i pseudo-obserwacji parametrycznych V'}
+knitr::include_graphics("porownanie.png")
+```
+
+Diagnostyka dopasowania kopuły została przeprowadzona poprzez porównanie gęstości empirycznej z gęstością teoretyczną wynikającą z dopasowanej kopuły (Rysunek 7). Kształty powierzchni reprezentujących gęstość empiryczną oraz teoretyczną (wynikającą z dopasowanej kopuły) są do siebie zbliżone. Możemy zauważyć negtywną zależność, ponieważ mniejsze wartości $u_1$ oraz większe wartości $u_2$ osiągają wyższą gęstość. Ogony (obszary odpowiadające ekstremalnym wartościom zmiennych) są lekko poniżej poziomu centrum, więc skrajne wartości występują z mniejszym natężeniem niż wartości umiarkowane.
+
+```{r echo=FALSE, fig.align='center', out.height='40%', out.width='40%', fig.cap='Porównanie gęstosci empirycznej i teoretycznej kopuły'}
+knitr::include_graphics("gestosci-kopula.png")
+```
+
+Dodatkowo porównano kontury poziomicowe empiryczne i teoretyczne (Rysunek 8). W centralnym obszarze kontury empiryczne i teoretyczne pokrywają się bardzo dobrze. W obszarach o niższej gęstości (na brzegach) można dostrzec pewne różnice między estymacjami empirycznymi a teoretycznymi. W obu podejściach (parametrycznym i nieparametrycznym) dopasowana kopuła Rotated BB1 ($270^\circ$) dobrze odwzorowuje obserwowaną strukturę zależności.
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Porównanie konturów empirycznych i teoretycznych (kopuły)'}
+knitr::include_graphics("kontury-porownanie.png")
+```
+
+Zależność ekstremalna została oceniona zarówno empirycznie, jak i teoretycznie na podstawie dopasowanych kopuł. Współczynniki dolnej i górnej zależności ekstremalnej zdefiniowano jako:
+$$\lambda_U = \lim_{u \to 1^-} \frac{1 - 2u + C(u,u)}{1 - u}, \quad \lambda_L = \lim_{u \to 0^+} \frac{C(u,u)}{u},$$
+gdzie $C$ to kopuła wiążąca rozkłady brzegowe $F_1$ i $F_2$ zmiennych $X_1$ i $X_2$, a $U_i = F_i(X_i)$.
+
+Dodatnia wartość współczynnika $\lambda_L$ lub $\lambda_U$ wskazuje na istnienie zależności w odpowiednim ogonie rozkładu (dolnym lub górnym). W analizowanych przypadkach zarówno empiryczne, jak i teoretyczne wartości współczynników były równe zeru, co sugeruje brak zależności ekstremalnej. Stąd dopasowane kopuły Rotated BB1 ($270^\circ$) nie modelują wspólnych skrajnych obserwacji.
+
+Uzyskane wyniki sugerują, że zależność między zmiennymi $X_2$ oraz $X_3$ jest umiarkowana i ma charakter asymetryczny (ujemny), co dobrze modeluje kopuła BB1 po rotacji o $270^\circ$, która uwzględnia specyficzne zachowania w lewym ogonie rozkładu.
+
+
+# Zadanie 2
+
+Niech $X_1$ opisuje wartości temperatur. Zbadamy, jaki jest rozkład warunkowy temperatur przy warunku, że ciśnienie, oznaczane przez $X_2$ (odpowiednio prędkość wiatru - $X_3$), ma wartość na poziomie 20-letniego i odpowiednio 50-letniego poziomu zwotu. Zastosujemy dwa modele: parametryczny oraz nieparametryczny.
+
+Niech $\hat{F} = \hat{C}(\hat{F}_1,\hat{F}_2)$ będzie dystrybuantą rozkładu łącznego wektora $(X_1,X_i)$, $i = 1,2$, gdzie $\hat{C}$ jest wyestymowaną kopułą tego rozkładu, a $\hat{F}_1$, $\hat{F}_2$ są dystrybuantami empirycznymi, odpowiednio zmiennej $X_1$ i $X_i$ (rozkład dopasowany w punkcie 1). Niech $rl$, $l=20,50$, oznacza odpowiedni poziom zwrotu zmiennej $X_i$, $i = 1,2$. Poziomy zwrotu dla zmiennych $X_2$ i $X_3$ zostały wyznaczone w pierwszej części projektu (Analiza I) z modelu pierwszego (dopasowanie najlepszego rozkładu) i przedstawione w poniższej tabeli:
+
+```{r echo=FALSE}
+knitr::kable(tabela_poziomy_zwrotu, row.names = TRUE, col.names = c("$r20$", "$r50$"),
+             caption = "Poziomy zwrotu")
+```
+
+Dopasowane kopuły dwuwymiarowe wykorzystane w metodzie parametrycznej i nieparametrycznej zostały zestawione w tabeli poniżej:
+
+| Podejście           | Kopuła      | Typ kopuły                          | Parametry kopuły        | $\tau_{\text{teo}}$ |
+| ------------------- | ----------- | ----------------------------------- | ---------------------------- | ---------- |
+| Parametryczne       | $C_{12}$    | Rotated Tawn type 1 ($180^\circ$)   | (par = 1.29, par2 = 0.06)    | 0.03       |
+| Parametryczne       | $C_{13}$    | Survival BB8                        | (par = 1.75, par2 = 0.75)    | 0.13       |
+| Nieparametryczne    | $C_{12}$    | Rotated Tawn type 1 ($180^\circ$)   | (par = 1.31, par2 = 0.06)    | 0.04       |
+| Nieparametryczne    | $C_{13}$    | Survival BB8                        | (par = 1.76, par2 = 0.74)    | 0.13       |
+
+WZORY KOPUŁ, KTÓRYCH JESZCZE NIE BYŁO...
+
+
+
+
+Warunkową gęstość zmiennej $X_1$, pod warunkiem $\{X_2 = x_2\}$, definiujemy jako
+$$f(x_1 \mid x_2) = \frac{f(x_1, x_2)}{f_2(x_2)}, \quad f_2(x_2) \neq 0.$$
+Gęstość łączną możemy również zapisać jako
+$$f(x_1, x_2) = f_1(x_1) f_{2|1}(x_2 \mid x_1) = f_2(x_2) f_{1|2}(x_1 \mid x_2).$$
+Niech $C$ będzie kopułą rozkładu $F$ (dystrybuantą wektora $(U_1, U_2) = (F_1(X_1), F_2(X_2))$). Rozkład warunkowy $U_1$ pod warunkiem $\{U_2 = u_2\}$ opisuje kopuła warunkowa
+$$C_{1|2}(u_1 \mid u_2) = P(U_1 \leq u_1 \mid U_2 = u_2) = \frac{\partial}{\partial u_2} C(u_1, u_2).$$
+Stąd dystrybuanta warunkowa $X_1$, pod warunkiem $\{X_2 = x_2\}$, jest równa
+$$F_{1|2}(x_1 \mid x_2) = P(X_1 \leq x_1 \mid X_2 = x_2) = P(U_1 \leq u_1 \mid U_2 = u_2) = C_{1|2}(F_1(x_1) \mid F_2(x_2)),$$
+gdzie $u_1 = F_1(x_1)$, $u_2 = F_2(x_2)$ oraz gęstość warunkowa
+$$f_{1|2}(x_1 \mid x_2) = f_1(x_1) \, c(F_1(x_1), F_2(x_2)),$$
+gdzie $c$ jest gęstością kopuły $C$.
+
+Korzystając z powyższych, gęstość łączną możemy zapisać za pomocą gęstości brzegowych i gęstości kopuły następująco:
+$$f(x_1, x_2) = f_2(x_2) f_{1|2}(x_1 \mid x_2) = f_1(x_1) f_2(x_2) c(F_1(x_1), F_2(x_2)).$$
+
+Funkcje $h$ odpowiadające kopuli dwuwymiarowej $C_{12}$ są zdefiniowane dla wszystkich $(u_1, u_2) \in [0, 1]^2$ jako:
+$$h_{1|2}(u_1|u_2) := \frac{\partial}{\partial u_2} C_{12}(u_1, u_2),$$
+$$h_{2|1}(u_2|u_1) := \frac{\partial}{\partial u_1} C_{12}(u_1, u_2).$$
+
+Została wygenerowana próba liczności danych z rozkładu warunkowego $F_{1|i}(x_1|rl)$ zgodnie z algorytmem generowania $N$-elementowej próby z rozkładu warunkowego $F_{1|2}(x_1 \mid x_2)$, gdzie $F= C(F_1, F_2)$:
+
+1. Wyznaczamy warunek $\{U_2 = u_2\}$ z $F_2(x_2)=u_2$.
+2. Generujemy $N$-elementową próbę $(u_i)_{i=1}^N$ z rozkładu jednostajnego $U(0,1)$.
+3. Wyznaczamy wartości funkcji odwrotnej do $h_{1|2}(\cdot \mid \nu)$ dla wygenerowanej próby:
+$$w_i = h_{1|2}^{-1}(u_i \mid \nu), \quad i = 1, \dots, N.$$
+4. Składamy z funkcją kwantylową rozkładu $F_1$:
+$$x_i = F_1^{-1}(w_i), \quad i = 1, \dots, N.$$
+Rozkłady temperatur oraz rozkłady warunkowe uzyskane na podstawie wygenerowanych prób zostały zestawione na wykresach.
+
+
+
+
+... MOŻEMY ZROBIĆ WSZYSTKIE OBRAZKI NA RAZ ALBO PODZIELIĆ NA 4 PRZYPADKI ...
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Dane temperatur i próby warunkowe pod warunkiem, że X2=r20'}
+knitr::include_graphics("warunkowe-x2-20.png")
+```
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Dane temperatur i próby warunkowe pod warunkiem, że X2=r50'}
+knitr::include_graphics("warunkowe-x2-50.png")
+```
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Dane temperatur i próby warunkowe pod warunkiem, że X3=r20'}
+knitr::include_graphics("warunkowe-x3-20.png")
+```
+
+```{r echo=FALSE, fig.align='center', out.height='50%', out.width='50%', fig.cap='Dane temperatur i próby warunkowe pod warunkiem, że X3=r50'}
+knitr::include_graphics("warunkowe-x3-50.png")
+```
+
+OPISY OBRAZKÓW...
+WNIOSKI DO WYKRESÓW...
+
+Prognoza jako średnia z rozkładu warunkowego...
+
+Średnia temperatura latem w Chojnicach wynosiła $17.54^\circ$C. Tabela średnich warunkowych temperatur uzyskanych z wygenerowanych prób:
+```{r echo=FALSE}
+knitr::kable(tabela_srednie_temp, row.names = TRUE, col.names = c("Parametrycznie", "Nieparametrycznie"),
+             caption = "Średnie warunkowe temperatury")
+```
+
+Przedziały 5% 95% model nieparametryczny:
+```{r echo=FALSE}
+knitr::kable(tabela_przedzial_npar, row.names = TRUE, col.names = c("5%", "95%"),
+             caption = "Przedziały temperatur 5% 95% model nieparametryczny")
+```
+
+Przedziały 5% 95% model parametryczny:
+```{r echo=FALSE}
+knitr::kable(tabela_przedzial_par, row.names = TRUE, col.names = c("5%", "95%"),
+             caption = "Przedziały temperatur 5% 95% model parametryczny")
+```
